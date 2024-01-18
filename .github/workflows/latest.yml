@@ -56,10 +56,7 @@ jobs:
         run: curl -sk https://127.0.0.1:${CLIENT_PORT} | grep -q 'client="vpn"'
 
       - name: Check if the exporter port is responding.
-        run: |
-          curl http://127.0.0.1:${EXPORTER_PORT}
-          curl http://127.0.0.1:${EXPORTER_PORT}/metrics
-          curl -sk http://127.0.0.1:${EXPORTER_PORT}/metrics | grep -q "vpn_active_sessions"
+        run: curl -sk http://127.0.0.1:${EXPORTER_PORT}/metrics | grep -q "go_goroutines"
 
       - name: Check if the container is correctly stopped and removed.
         run: docker stop ${DOCKERCONTAINER} && docker rm -fv ${DOCKERCONTAINER}

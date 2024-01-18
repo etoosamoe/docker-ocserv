@@ -73,7 +73,6 @@ chmod 600 /dev/net/tun
 
 # Enable exporter if variable set
 if [ "$ENABLE_EXPORTER" -eq 1 ]; then
-		sed -i 's/use-occtl = false/use-occtl = true/' /etc/ocserv/ocserv.conf
 		/etc/ocserv-exporter/ocserv-exporter --listen 0.0.0.0:8000 &
 	fi
 
