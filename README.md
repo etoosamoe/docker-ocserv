@@ -76,6 +76,8 @@ All the variables to this image is optional, which means you don't have to type 
 
 `NO_TEST_USER`, while this variable is set to not empty, the `test` user will not be created. You have to create your own user with password. The default value is to create `test` user with password `test`.
 
+`ENABLE_EXPORTER`, if set to `1` it will run [ocserv Prometheus exporter](https://github.com/criteo/ocserv-exporter) in a background, listens on 0.0.0.0:8000/metrics. See docker-entrypoint.sh for run command. We run second process in the container, which isn't a good practice, due to exporter uses `occtl` utility which runs locally.
+
 The default values of the above environment variables:
 
 |   Variable   |     Default     |
@@ -113,6 +115,13 @@ A totally customized instance with both CA and server certification
 docker run --name ocserv --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 443:443 -p 443:443/udp -e CA_CN="My CA" -e CA_ORG="My Corp" -e CA_DAYS=3650 -e SRV_CN=my.test.com -e SRV_ORG="My Test" -e SRV_DAYS=365 -d quay.io/aminvakil/ocserv
 ```
 
+Start a container with Prometheus Metrics exposed:
+
+```bash
+docker run --name ocserv --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 443:443 -p 443:443/udp -p 8000:8000 -e "ENABLE_EXPORTER=1" -e CA_CN="My CA" -e CA_ORG="My Corp" -e CA_DAYS=3650 -e SRV_CN=my.test.com -e SRV_ORG="My Test" -e SRV_DAYS=365 -d docker.amazinghiring.com/ocserv
+```
+
+-p 127.0.0.1:8000:8000 -e "ENABLE_EXPORTER=1"
 Start an instance as above but without test user
 
 ```bash

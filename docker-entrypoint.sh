@@ -71,5 +71,10 @@ mkdir -p /dev/net
 mknod /dev/net/tun c 10 200
 chmod 600 /dev/net/tun
 
+# Enable exporter if variable set
+if [ "$ENABLE_EXPORTER" -eq 1 ]; then
+		/etc/ocserv-exporter/ocserv-exporter --listen 0.0.0.0:8000 &
+	fi
+
 # Run OpennConnect Server
 exec "$@"
