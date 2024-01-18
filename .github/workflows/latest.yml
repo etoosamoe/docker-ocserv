@@ -45,7 +45,7 @@ jobs:
 
       - name: Run a container of created image.
         run: |
-          DOCKERCONTAINER=$(docker run --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -e "ENABLE_EXPORTER=1" -p 127.0.0.1:${CLIENT_PORT}:443 -p 127.0.0.1:${CLIENT_PORT}:443/udp -p 127.0.0.1:${EXPORTER_PORT}:8000 -d ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
+          DOCKERCONTAINER=$(docker run --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 127.0.0.1:${CLIENT_PORT}:443 -p 127.0.0.1:${CLIENT_PORT}:443/udp -p 127.0.0.1:${EXPORTER_PORT}:8000 -e "ENABLE_EXPORTER=1" -d ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
           sleep 5
           echo "DOCKERCONTAINER=$DOCKERCONTAINER" >> $GITHUB_ENV
 
@@ -59,7 +59,7 @@ jobs:
         run: |
           curl http://127.0.0.1:${EXPORTER_PORT}
           curl http://127.0.0.1:${EXPORTER_PORT}/metrics
-          curl -sk http://127.0.0.1:${EXPORTER_PORT}/metrics | grep -q 'vpn_active_sessions'
+          curl -sk http://127.0.0.1:${EXPORTER_PORT}/metrics | grep -q "vpn_active_sessions"
 
       - name: Check if the container is correctly stopped and removed.
         run: docker stop ${DOCKERCONTAINER} && docker rm -fv ${DOCKERCONTAINER}
