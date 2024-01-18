@@ -49,6 +49,12 @@ RUN buildDeps=( \
 	&& apk del .build-deps \
 	&& rm -rf /var/cache/apk/*
 
+
+RUN apk add --no-cache --update curl tar gzip && \
+    mkdir -p /etc/ocserv-exporter && \
+    curl -L https://github.com/criteo/ocserv-exporter/releases/download/v0.2.1/ocserv-exporter_0.2.1_linux_amd64.tar.gz | tar -xvz -C /etc/ocserv-exporter/ && \
+	apk del curl tar gzip
+
 # Setup config
 COPY routes.txt /tmp/
 RUN set -x \

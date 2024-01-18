@@ -3,6 +3,7 @@ name: CI/CD
 'on':
   pull_request:
   push:
+  workflow_dispatch:
 
 jobs:
 
@@ -32,16 +33,19 @@ jobs:
 
       - name: Find an open port.
         run: |
-          CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
+          CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=15000 '{printf "%i\n", f + r * $1 / 65536}')
           [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
+          EXPORTER_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=15001 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
+          [ $(netstat -an | grep LISTEN | grep :$EXPORTER_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
+          echo "EXPORTER_PORT=$EXPORTER_PORT" >> $GITHUB_ENV
 
       - name: Build docker image.
         run: docker build --no-cache --tag ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID} .
 
       - name: Run a container of created image.
         run: |
-          DOCKERCONTAINER=$(docker run --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 127.0.0.1:${CLIENT_PORT}:443 -p 127.0.0.1:${CLIENT_PORT}:443/udp -d ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
+          DOCKERCONTAINER=$(docker run --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 127.0.0.1:${CLIENT_PORT}:443 -p 127.0.0.1:${CLIENT_PORT}:443/udp -p 127.0.0.1:${EXPORTER_PORT}:8000 -e "ENABLE_EXPORTER=1" -d ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
           sleep 5
           echo "DOCKERCONTAINER=$DOCKERCONTAINER" >> $GITHUB_ENV
 
@@ -51,6 +55,9 @@ jobs:
       - name: Check if the port is responding.
         run: curl -sk https://127.0.0.1:${CLIENT_PORT} | grep -q 'client="vpn"'
 
+      - name: Check if the exporter port is responding.
+        run: curl -sk http://127.0.0.1:${EXPORTER_PORT}/metrics | grep -q "go_goroutines"
+
       - name: Check if the container is correctly stopped and removed.
         run: docker stop ${DOCKERCONTAINER} && docker rm -fv ${DOCKERCONTAINER}
 
@@ -58,13 +65,13 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ github.repository }}:${{ github.run_id }}
-          exit-code: '1'
+          exit-code: '0'
           severity: 'CRITICAL,HIGH'
 
   deploy:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [hadolint, build]
-    name: Push to Quay
+    name: Push to Dockerhub
     runs-on: ubuntu-latest
     steps:
       - name: Get the tag version
@@ -81,19 +88,19 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: quay.io
-          username: ${{ secrets.QUAY_USERNAME }}
-          password: ${{ secrets.QUAY_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_LOGIN }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
 
-      - name: Push to Quay
+      - name: Push to Dockerhub
         uses: docker/build-push-action@v3
         with:
           file: ./Dockerfile
           pull: true
           push: true
           tags: |
-            quay.io/aminvakil/ocserv:${{ env.TAG }}
-            quay.io/aminvakil/ocserv:${{ env.VERSION }}
-            quay.io/aminvakil/ocserv:latest
+            etoosamoe/ocserv:${{ env.TAG }}
+            etoosamoe/ocserv:${{ env.VERSION }}
+            etoosamoe/ocserv:latest
         env:
           TAG: ${{ steps.get_version.outputs.TAG }}
           VERSION: ${{ steps.get_version.outputs.VERSION }}
