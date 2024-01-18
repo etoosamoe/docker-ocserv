@@ -121,7 +121,6 @@ Start a container with Prometheus Metrics exposed:
 docker run --name ocserv --sysctl net.ipv4.ip_forward=1 --cap-add NET_ADMIN --security-opt no-new-privileges -p 443:443 -p 443:443/udp -p 8000:8000 -e "ENABLE_EXPORTER=1" -e CA_CN="My CA" -e CA_ORG="My Corp" -e CA_DAYS=3650 -e SRV_CN=my.test.com -e SRV_ORG="My Test" -e SRV_DAYS=365 -d docker.amazinghiring.com/ocserv
 ```
 
--p 127.0.0.1:8000:8000 -e "ENABLE_EXPORTER=1"
 Start an instance as above but without test user
 
 ```bash
