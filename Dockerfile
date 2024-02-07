@@ -1,6 +1,6 @@
-FROM alpine:3.19.0
+FROM alpine:3.19.1
 
-LABEL maintainer="Amin Vakil <info@aminvakil.com>"
+LABEL maintainer="Yuriy Semyenkov <yuriy.semyenkov@gmail.com>"
 
 ENV OC_VERSION=1.2.4
 
